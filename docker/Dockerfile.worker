@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+RUN useradd -m -u 1000 appuser
+
+# Install CPU-only PyTorch (~300MB) + other dependencies
+RUN pip install --no-cache-dir \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    torch==2.1.0 \
+    redis aioredis prometheus-client pydantic-settings
+
+USER appuser
+WORKDIR /app
+COPY --chown=appuser:appuser app/ ./app/
+
+# Generate dummy model at build time (self-contained, no host file needed)
+RUN mkdir -p /app/weights && python -c "\
+import torch; \
+model = torch.nn.Sequential(torch.nn.Linear(512,256), torch.nn.ReLU(), torch.nn.Linear(256,10)); \
+torch.jit.save(torch.jit.script(model), '/app/weights/model.pt'); \
+print('Dummy model generated at /app/weights/model.pt')"
+
+CMD ["python", "-m", "app.queue_worker"]

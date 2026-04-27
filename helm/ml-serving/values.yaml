@@ -1,0 +1,17 @@
+image:
+  apiRepo: /ml-api
+  workerRepo: /ml-worker
+  tag: latest
+redis:
+  url: redis://redis-master.ml-serving.svc.cluster.local:6379
+model:
+  path: /app/weights/model.pt
+  version: v1
+hpa:
+  minReplicas: 2
+  maxReplicas: 10
+worker:
+  batchSize: 8
+  batchWindowMs: 20
+monitoring:
+  enabled: false

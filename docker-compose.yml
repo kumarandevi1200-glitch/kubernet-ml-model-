@@ -1,0 +1,53 @@
+version: "3.8"
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  api:
+    build: 
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MODEL_PATH=/app/weights/model.pt
+      - SHARED_MEMORY_NAME=ml_model_weights
+      - MAX_QUEUE_SIZE=1000
+      - WORKER_TIMEOUT_SEC=30
+      - LOG_LEVEL=info
+      - MODEL_VERSION=v1
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./weights:/app/weights
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MODEL_PATH=/app/weights/model.pt
+      - SHARED_MEMORY_NAME=ml_model_weights
+      - MAX_QUEUE_SIZE=1000
+      - WORKER_TIMEOUT_SEC=30
+      - LOG_LEVEL=info
+      - MODEL_VERSION=v1
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: 2
+    volumes:
+      - ./weights:/app/weights
+      - type: tmpfs
+        target: /dev/shm

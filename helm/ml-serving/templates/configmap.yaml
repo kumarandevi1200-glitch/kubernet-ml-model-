@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-serving-config
+data:
+  MODEL_PATH: "/app/weights/model.pt"
+  MODEL_VERSION: {{ .Values.model.version | quote }}
+  SHARED_MEMORY_NAME: "ml_model_weights"
+  MAX_QUEUE_SIZE: "1000"
+  WORKER_TIMEOUT_SEC: "30"
+  LOG_LEVEL: "info"
+  REDIS_URL: {{ .Values.redis.url | quote }}

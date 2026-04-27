@@ -1,0 +1,16 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ml-serving-api-monitor
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: ml-serving-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s
+{{- end }}
